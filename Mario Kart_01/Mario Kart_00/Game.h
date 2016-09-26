@@ -6,6 +6,7 @@
 
 #include "Player.h"
 #include "GameCamera.h"
+#include "Pat.h"
 
 
 
@@ -56,7 +57,12 @@ public:
 	{
 		return &player;
 	}
+	CPad* Getpat()
+	{
+		return &pat;
+	}
 private:
+	CPad pat;
 	GameCamera gameCamera;			//ゲームカメラ。
 	Player player;					//プレイヤー。
 };

@@ -68,7 +68,7 @@ INT WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, INT)
 
 	// ウィンドウを作成。
 	HWND hWnd = CreateWindow("Doi Kart", "Doi Kart",
-		WS_OVERLAPPEDWINDOW, 100, 100, 900, 900,
+		WS_OVERLAPPEDWINDOW, 0, 0, 1080, 824,
 		NULL, NULL, wc.hInstance, NULL);
 	// Direct3Dを初期化。
 	InitD3D(hWnd);

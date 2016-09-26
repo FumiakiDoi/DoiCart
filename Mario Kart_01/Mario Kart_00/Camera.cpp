@@ -6,7 +6,7 @@
 Camera::Camera()
 {
 	Near = 0.1f;
-	Far = 100.0f;
+	Far = 10000.0f;
 	aspect = 1.0f;
 }
 //デストラクタ

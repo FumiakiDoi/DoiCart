@@ -5,6 +5,8 @@
 #include "Camera.h"
 #include "game.h"
 #include "Course.h"
+#include "SkyBox.h"
+#include "text.h"
 
 /*!
 * @brief	コンストラクタ。
@@ -24,9 +26,9 @@ D3DXVECTOR4 			g_diffuseLightDirection[LIGHT_NUM];	//ライトの方向。
 D3DXVECTOR4				g_diffuseLightColor[LIGHT_NUM];		//ライトの色。
 D3DXVECTOR4				g_ambientLight;						//環境光
 
-
 Course course;
-
+SkyBox skybox;
+Text text;
 
 
 /*!
@@ -55,9 +57,11 @@ void Game::Start()
 	ZeroMemory(g_diffuseLightColor, sizeof(g_diffuseLightColor));
 	player.Init(g_pd3dDevice);
 	course.Init(g_pd3dDevice);
-	player.SetPosition(D3DXVECTOR3(0, 0, 0));
+	skybox.Init(g_pd3dDevice);
 	//カメラの初期化。
 	gameCamera.Start(&player);	
+	text.Init();
+	player.course = &course;
 }
 /*! 
 * @brief	更新。
@@ -67,6 +71,9 @@ void Game::Update()
 	gameCamera.PreUpdate();
 	player.Update();
 	gameCamera.Update();
+	course.Update();
+	skybox.Update();
+	pat.Update();
 }
 /*!
 * @brief	描画。
@@ -74,9 +81,7 @@ void Game::Update()
 void Game::Render()
 {
 	// 画面をクリア。
-	g_pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(50, 50, 50), 1.0f, 0);
-	//シーンの描画開始。
-	g_pd3dDevice->BeginScene();
+	
 	//Playerを描画。
 	player.Render(
 		g_pd3dDevice,
@@ -96,13 +101,20 @@ void Game::Render()
 		g_ambientLight,
 		LIGHT_NUM
 		);
-	// シーンの描画終了。
-	g_pd3dDevice->EndScene();
-	// バックバッファとフロントバッファを入れ替える。
-	g_pd3dDevice->Present(NULL, NULL, NULL, NULL);
+	skybox.Render(
+		g_pd3dDevice,
+		GetCamera().GetViewMatrix(),
+		GetCamera().GetProjectionMatrix(),
+		g_diffuseLightDirection,
+		g_diffuseLightColor,
+		g_ambientLight,
+		LIGHT_NUM
+		);
+	text.Render();
 }
 void Game::Terminate()
 {
 	player.Release();
 	course.Release();
+	skybox.Release();
 }

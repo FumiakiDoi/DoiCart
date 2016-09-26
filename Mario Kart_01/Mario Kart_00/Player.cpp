@@ -2,7 +2,6 @@
 #include "Player.h"
 #include "Game.h"
 
-
 //コンストラクタ
 Player::Player()
 {
@@ -12,32 +11,25 @@ Player::Player()
 	numMaterial = 0;
 	effect = NULL;
 	D3DXMatrixIdentity(&mWorld);
-	D3DXMatrixIdentity(&mRotation);
-	/*position.x = 0.0f;
-	position.y = 0.0f;
-	position.z = 0.0f;
-	rotation.x = 0.0f;
-	rotation.y = 0.0f;
-	rotation.z = 0.0f;*/
+	D3DXMatrixIdentity(&mRot);
 	pD3DXMtrlBuffer = NULL;
 	accel = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	speed = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	brake = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	moveDirection = D3DXVECTOR3(0.0f, 0.0f, 1.0f);
+	frg = false;
 }
 //デストラクタH
 Player::~Player()
 {
 	Release();
 }
-//座標を設定。
-void Player::SetPosition(D3DXVECTOR3 pos)
-{
-	position = pos;
-}
+
 //初期化。
 void Player::Init(LPDIRECT3DDEVICE9 pd3dDevice)
 {
 	//Xファイルのロード。
-	D3DXLoadMeshFromX("BMWPlayer.x", D3DXMESH_SYSTEMMEM,
+	D3DXLoadMeshFromX("car.x", D3DXMESH_SYSTEMMEM,
 		pd3dDevice, NULL,
 		&pD3DXMtrlBuffer, NULL, &numMaterial,
 		&mesh);
@@ -75,53 +67,122 @@ void Player::Init(LPDIRECT3DDEVICE9 pd3dDevice)
 	}
 	position = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	rotation = D3DXQUATERNION(0.0f, 0.0f, 0.0f, 1.0f);
+
 }
 //更新。
 void Player::Update()
 {
-	bool isTurn = false;
-	const float moveSpeed = 0.3;
-	D3DXVECTOR3 moveDir = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-	if(GetAsyncKeyState(VK_UP))
+	if (D3DXVec3Length(&speed) > 0.1f)
 	{
-		position.z += moveSpeed;
-		//moveDir -= direction_z;
-		currentAngleY = D3DXToRadian(0.0f);
+
+		float xstick = game->Getpat()->GetLStickXF();
+		{
+			D3DXMATRIX kaiten;
+			D3DXMatrixRotationY(&kaiten, TurnSpeed *xstick);
+			D3DXVECTOR4 vOut;
+			D3DXVECTOR4 vSpeed;
+			D3DXVec3Transform(&vOut, &moveDirection, &kaiten);//moveとkaitenの計算結果がOutに入る
+			D3DXVec3Transform(&vSpeed, &speed, &kaiten);
+			if (!game->Getpat()->IsPress(enButtonRB1))
+			{
+				moveDirection.x = vOut.x;
+				moveDirection.y = vOut.y;
+				moveDirection.z = vOut.z;
+				speed.x = vSpeed.x;
+				speed.y = vSpeed.y;
+				speed.z = vSpeed.z;
+				mRot = mRot * kaiten;
+			}
+			else
+			{
+				moveDirection.x = vOut.x;
+				moveDirection.y = vOut.y;
+				moveDirection.z = vOut.z;
+				mRot = mRot * kaiten;
+			}
+		}
 	}
-	if (GetAsyncKeyState(VK_DOWN))
+
+	
+	//アクセルとブレーキ
+	/*if (GetAsyncKeyState('A'))
 	{
-		position.z -= moveSpeed;
-		//moveDir += direction_z;
-		currentAngleY = D3DXToRadian(180.0f);
-	}
-	if (GetAsyncKeyState(VK_RIGHT))
+		accel = moveDirection * ACCEL;
+	}else if (GetAsyncKeyState('S'))
+	{*/
+	if (game->Getpat()->IsPress(enButtonA))
 	{
-		//Y += D3DXToRadian(1.0f);
-		//position.x += 0.1f;
-		currentAngleY = D3DXToRadian(90.0f);
+		accel = moveDirection * ACCEL;
 	}
-	if (GetAsyncKeyState(VK_LEFT))
+	else if (game->Getpat()->IsPress(enButtonB))
 	{
-		//position.x -= 0.1f;
-		//moveDir -= direction_x;
-		currentAngleY = D3DXToRadian(-90.0f);
+		if (D3DXVec3Length(&speed)<0.1f)
+		{
+			accel = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+			speed = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+		}
+		else
+		{
+			//ブレーキ
+			accel = moveDirection * BRAKE;
+			//accel = D3DXVECTOR3(0.0f, 0.0f, -10.0f);
+		}
 	}
-	if (GetAsyncKeyState('A'))
+	else
 	{
-		accel = D3DXVECTOR3(0.0f, 0.0f, 10.0f);
+		if (D3DXVec3Length(&speed) < 0.1f)
+		{
+			accel = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+			speed = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+		}
+		else
+		{
+			//エンジンブレーキ
+			accel = moveDirection * ANZINBRAKE;
+			//accel = D3DXVECTOR3(0.0f, 0.0f, -1.0f);
+		}
 	}
+	
 	
 	//accel *= 0.016666666666f;
 	//このフレームで加速する速度を計算する。
 	D3DXVECTOR3 addSpeed;
-	addSpeed = accel * (1.0f/60.0f);
+	addSpeed = accel * (1.0f / 60.0f);
 	speed += addSpeed;
 
-	//このフレームで移動させる座標を計算する。
-	D3DXMatrixTranslation(&mTrans, position.x, position.y, position.z);
-	D3DXMatrixRotationY(&mRot, currentAngleY);
-	mWorld = mRot * mTrans;
+	//brake
+	D3DXVECTOR3 addbrake;
+	addbrake = accel * (1.0f / 60.0f);
+	brake -= addbrake;
 
+	//このフレームで移動させる座標を計算する。
+	D3DXVECTOR3 addPosition;
+	addPosition = speed * (1.0f / 60.0f);
+	position += addPosition;
+	int						isHit;			//当たったかどうかを記録
+	float					Len;
+	D3DXVECTOR3 posrocal;
+	posrocal = position;
+	posrocal.y += 2.0f;
+	course->IsIntersect(posrocal, D3DXVECTOR3(0.0f, -1.0f, 0.0f),&isHit,&Len);
+	D3DXMatrixTranslation(&mTrans, position.x, position.y, position.z);
+	if (isHit==false)
+	{
+		position.y -= 0.1f;
+	}
+	if (position.y < -10)
+	{
+		position = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+		speed = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	}
+	//D3DXMatrixRotationY(&mRot, currentAngleY);
+	mWorld =mRot * mTrans;
+
+
+	speedMeter = speed;
+	speedMeter *= 60;
+	speedMeter *= 60;
+	speedMeter /= 1000;
 }
 //描画。
 void Player::Render(
@@ -147,7 +208,7 @@ void Player::Render(
 
 	effect->SetMatrix("g_projectionMatrix", &projMatrix);	//プロジェクション行列の転送。
 
-	effect->SetMatrix("g_rotationMatrix", &mRotation);		//回転行列を転送。
+	effect->SetMatrix("g_rotationMatrix", &mRot);		//回転行列を転送。
 	//ライトの向きを転送。
 	effect->SetVectorArray("g_diffuseLightDirection", diffuseLightDirection, numDiffuseLight);
 	//ライトのカラーを転送。

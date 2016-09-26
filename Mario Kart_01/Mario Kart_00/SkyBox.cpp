@@ -1,8 +1,8 @@
 #include "stdafx.h"
-#include "Course.h"
+#include "SkyBox.h"
 
 //コンストラクタ
-Course::Course()
+SkyBox::SkyBox()
 {
 	//初期化。
 	mesh = NULL;
@@ -12,26 +12,26 @@ Course::Course()
 	D3DXMatrixIdentity(&mWorld);
 	D3DXMatrixIdentity(&mRotation);
 	position.x = 0.0f;
-	position.y = -1.0f;
+	position.y = -130.0f;
 	position.z = 0.0f;
 }
 //デストラクタH
-Course::~Course()
-{
+SkyBox::~SkyBox()
+{  
 	Release();
 }
 //座標を設定。
-void Course::SetPosition(D3DXVECTOR3 pos)
+void SkyBox::SetPosition(D3DXVECTOR3 pos)
 {
 	position = pos;
 }
 //初期化。
-void Course::Init(LPDIRECT3DDEVICE9 pd3dDevice)
+void SkyBox::Init(LPDIRECT3DDEVICE9 pd3dDevice)
 {
 	//Xファイルをロード。
 	LPD3DXBUFFER pD3DXMtrlBuffer;
 	//Xファイルのロード。
-	D3DXLoadMeshFromX("course01.x", D3DXMESH_SYSTEMMEM,
+	D3DXLoadMeshFromX("sky.x", D3DXMESH_SYSTEMMEM,
 		pd3dDevice, NULL,
 		&pD3DXMtrlBuffer, NULL, &numMaterial,
 		&mesh);
@@ -70,13 +70,16 @@ void Course::Init(LPDIRECT3DDEVICE9 pd3dDevice)
 	}
 }
 //更新。
-void Course::Update()
+void SkyBox::Update()
 {
 	//ワールド行列の更新。
 	D3DXMatrixTranslation(&mWorld, position.x, position.y, position.z);
+	D3DXMATRIX mScale;
+	D3DXMatrixScaling(&mScale, 4.0f, 4.0f, 4.0f);
+	mWorld = mScale * mWorld;
 }
 //描画。
-void Course::Render(
+void SkyBox::Render(
 	LPDIRECT3DDEVICE9 pd3dDevice,
 	D3DXMATRIX viewMatrix,
 	D3DXMATRIX projMatrix,
@@ -121,7 +124,7 @@ void Course::Render(
 	effect->End();
 }
 //開放。
-void Course::Release()
+void SkyBox::Release()
 {
 	//メッシュを開放。
 	if (mesh != NULL) {

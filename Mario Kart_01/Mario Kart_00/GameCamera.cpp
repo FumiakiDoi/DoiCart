@@ -19,10 +19,10 @@ void GameCamera::Start(Player* player)
 {
 	toEyePos.x = -0.0f;
 	toEyePos.y = 1.5f;
-	toEyePos.z = -4.0f;		//カメラ位置
+	toEyePos.z = -0.0f;		//カメラ位置
 	
 
-	targetOffset.y = 0.0f;
+	targetOffset.y = 1.0f;
 	targetOffset.x = 0.0f;
 	camera.SetAspect(1280.0f / 720.0f);
 	camera.Init();
@@ -32,7 +32,6 @@ void GameCamera::Start(Player* player)
 //カメラを更新。
 void GameCamera::UpdateCamera()
 {
-	
 	if (GetAsyncKeyState(VK_SPACE))
 	{
 		if (frg == false)
@@ -73,6 +72,13 @@ void GameCamera::UpdateCamera()
 	eyePos.x += toEyePos.x;
 	eyePos.y += toEyePos.y;
 	eyePos.z += toEyePos.z;
+
+
+	//車を追いかけるカメラのつくりかた!!!!!!!!!!!!!!!!!!!!!!!					視点　=　注視点　+ 車の進行方向				!!!!!!!!!!!!!!!!!!!!!!!
+
+	//例　pos = target + moveDir * -5.0f
+	eyePos = target + player->GetDirection() * -10.0f;
+	eyePos.y += 2.0f;
 
 	camera.SetEyePt(eyePos);
 	camera.SetLookatPt(target);

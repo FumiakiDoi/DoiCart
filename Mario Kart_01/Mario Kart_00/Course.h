@@ -1,6 +1,5 @@
 #pragma once
-
-
+class Player;
 
 
 class Course {
@@ -27,6 +26,16 @@ public:
 	void Release();
 	//座標を設定。
 	void SetPosition(D3DXVECTOR3 pos);
+	void IsIntersect(D3DXVECTOR3 pos, D3DXVECTOR3 ray, int*isHit, float*len);
+	D3DXVECTOR3 GetPosition()
+	{
+		return position;
+	}
+	D3DXVECTOR3 GetRay()
+	{
+		return rayInGround;
+	}
+	Player *player;
 private:
 	D3DXVECTOR3				position;		//座標。
 	LPD3DXMESH				mesh;			//メッシュ。
@@ -35,4 +44,6 @@ private:
 	ID3DXEffect*			effect;			//エフェクト。
 	D3DXMATRIX				mWorld;			//ワールド行列。
 	D3DXMATRIX				mRotation;		//回転行列。
+	D3DXMATRIX				worldInvr;		//ワールド行列の逆行列
+	D3DXVECTOR3				rayInGround;	//レイ
 };
